@@ -1,0 +1,852 @@
+<!DCOTYPE html>
+<!--Jackie Chen, Amy Kwan -->
+<html onkeydown = "keyPressed(event);">
+	<head>
+		<title> Pet Simulation </title>
+		<style>
+			body
+			{
+			background-image: url("backgrounds/main.gif");
+			background-size:100% 100%;
+			background-repeat: no-repeat;
+			font-family: Comic Sans MS;
+			}
+			table , th, td
+			{
+				text-align: center;
+				background: rgba(255, 255, 255, 0.3);
+				border: 2px dotted black;
+			}
+			button
+			{
+				border-radius: 10px;
+				background-color: white;
+
+				font-size: 15px;
+			}
+			table#petInfo
+			{
+				position: absolute;
+				width:80%;
+				margin-left: 12%;
+			}
+			div#intro
+			{
+				font-size: 30px;
+				border: 2px solid blue;
+				border-radius: 15px;
+				background: rgba(180, 250, 0, 0.3);
+				text-align: center;
+
+			}
+			img#petChoice
+			{
+				position: relative;
+    		width: 25%;
+    		height: 45%;
+
+				margin-left: 30%;
+				top:300px;
+			}
+			div#shopDiv
+			{
+				position:absolute;
+				top:200px;
+				margin-left:25%;
+				background:rgba(150, 200, 200, 0.9);
+				border:3px dotted black;
+			}
+			div#trainingGameDiv
+			{
+					position:relative;
+					bottom:50%;
+					background:rgba(150, 35, 80, 0.7);
+					border:3px dotted black;
+
+
+			}
+			div#fightDiv
+			{
+					position:relative;
+					bottom:50%;
+					background:rgba(150, 120, 250, 0.6);
+					border:3px dotted black;
+					font-size: 25px;
+
+
+			}
+			img#returnButton
+			{
+				position:relative;
+				bottom:400px;
+				margin-left: 40%;
+
+
+			}
+			input#inputName
+			{
+				font-size:25px;
+			}
+			input#intelligenceText
+			{
+				font-size:25px;
+			}
+			div#strengthDiv
+			{
+				font-size:20px;
+			}
+			div#intelligenceInstructions
+			{
+				font-size: 20px;
+			}
+
+			button#instantFight
+			{
+				position:absolute;
+				font-size:5px;
+			}
+
+		</style>
+		<script>
+			function initialize()
+			{
+				begin = document.getElementById("begin");
+				intro = document.getElementById("intro");
+
+				selectionDiv = document.getElementById("selectionDiv");
+				selectionDiv.style.display = "none";
+
+				petChoice= document.getElementById("petChoice");
+
+
+
+
+				MAX_FULLNESS = 100; MAX_HEALTH = 100;	MAX_CLEANLINESS = 100; MAX_HAPPINESS = 100; SPEED = 1000;
+
+				WORD_LIST = ["rollover","sit","jump","paw","eat","catch!","shake","play dead"];
+				petName = document.getElementById("inputName");
+				petInfo = document.getElementById("petInfo");
+				petInfo.style.display = "none";
+				createNewPetDiv = document.getElementById("createNewPetDiv");
+				createNewPetDiv.style.display="none";
+
+				trainingGameDiv = document.getElementById("trainingGameDiv");
+				trainingGameDiv.style.display = "none";
+
+				timeSpan = document.getElementById("timeSpan");
+
+				intelligenceDiv = document.getElementById("intelligenceDiv");
+				intelligenceInstructions = document.getElementById("intelligenceInstructions");
+				intelligenceDiv.style.display = "none";
+				strengthDiv = document.getElementById("strengthDiv");
+				strengthDiv.style.display = "none";
+				generalDiv = document.getElementById("general");
+
+				generatedText = document.getElementById("generatedText");
+				keyCountSpan = document.getElementById("keyCountSpan");
+
+				returnButton = document.getElementById("returnButton");
+				returnButton.style.display = "none";
+				coinsSpan = document.getElementById("coinsSpan");
+				shopDiv = document.getElementById("shopDiv");
+				shopDiv.style.display = "none";
+
+				fightDiv = document.getElementById("fightDiv");
+				fightDiv.style.display = "none";
+
+				opponentStrength = document.getElementById("opponentStrength");
+				opponentIntelligence = document.getElementById("opponentIntelligence");
+				fightingHealth = document.getElementById("fightingHealth");
+				fightingStrength = document.getElementById("fightingStrength");
+				winnerSpan = document.getElementById("winnerSpan");
+				beginTrainingBtn = document.getElementById("beginTrainingBtn");
+				intelligenceText = document.getElementById("intelligenceText");
+				pets = []
+				petDisplay = []
+				displayInterval = setInterval(display, 500);
+				training = false;
+				createdPet = false;
+			}
+			function yes()
+			{
+				selectionDiv.style.display = "block";
+				begin.style.display = "none";
+			}
+			function playerSelect(pic)
+			{
+
+					petChoice.src = pic;
+					selectionDiv.style.display= "none";
+					createNewPetDiv.style.display="block";
+
+			}
+
+			function Pet(name)
+			{
+
+				this.name = name;
+				this.idx = pets.length;
+				this.age = 0;
+				this.cleanliness= MAX_CLEANLINESS;
+				this.happiness= MAX_HAPPINESS;
+				this.health = MAX_HEALTH;
+				this.fullness = 50;
+				this.strength = 0;
+				this.intelligence = 0;
+				this.coins = 0;
+				this.alive = true;
+				this.sick = false;
+				this.score = 0;
+
+
+				this.generateCoins = function(){setInterval(this.incrementCoins, 1*SPEED,this);};
+				this.incrementCoins = function(pet){if(pet.alive){pet.coins += pet.age+1;};};
+
+
+
+				this.living = function(){setInterval(this.decrementHealth,5*SPEED,this);
+										 setInterval(this.decrementfullness,20*SPEED,this);
+										 setInterval(this.incrementAge,600*SPEED,this);
+										 setInterval(this.decrementHappiness,10*SPEED,this);
+										 setInterval(this.decrementCleanliness,20*SPEED,this)}
+
+
+				this.decrementHappiness = function(pet){if(pet.alive && pet.cleanliness <= 0){pet.happiness --;pet.cleanliness = 0;}};
+				this.incrementAge = function(pet){if(pet.alive&&pet.age < 18){pet.age ++;};};
+				this.decrementCleanliness = function(pet){if(pet.alive && pet.cleanliness > 0){pet.cleanliness -= Math.floor(Math.random()*10);};};
+				this.decrementHealth = function(pet){if(pet.alive && pet.fullness == 0){pet.health --;}if(pet.alive && pet.fullness > 0 && !pet.sick && pet.health < MAX_HAPPINESS){pet.health ++;pet.fullness --;}if(pet.health <= 0){pet.alive = false;};};
+				this.decrementfullness = function(pet){if(pet.alive && pet.fullness > 0){pet.fullness --;};};
+
+				this.sickLoop = function(){setInterval(this.turnSick,120*SPEED,this);};//2 minutes
+
+				this.turnSick = function(pet)
+					{
+						chance = Math.random();
+						if(pet.alive && chance < (.30-pet.intelligence/1000))//30% chance to get sick, smarter the pet the less likely it will get sick.
+						{
+							if(pet.sick)
+							{
+								pet.health -= 25;
+								if(pet.health < 0)
+								{
+									pet.health = 0;
+									pet.alive = false;
+								}
+							}
+							else
+							{
+								pet.sick = true
+								pet.health -= 20;
+								if(pet.health < 0)
+								{
+									pet.health = 0;
+									pet.alive = false;
+								}
+							}
+						}
+					}
+
+				this.cureSickness = function()
+					{
+						this.sick = false;
+						if(this.happiness < MAX_HAPPINESS - 25)
+							this.happiness += 25
+						else
+							this.happiness = MAX_HAPPINESS;
+					}
+
+
+				this.toString = function(){ return "<td> " + this.name + " </td><td> " + this.age + " </td><td> " + this.cleanliness + " </td><td> " + this.happiness + " </td><td> " + this.health + " </td><td> " + this.fullness + " </td><td> " + this.strength + " </td><td> " + this.intelligence + "</td><td> " + this.coins + " </td><td> " + this.sick + ", " + (.30-this.intelligence/1000)*100 + "% chance </td> <td> <button onclick = 'trainPet(" + this.idx + ", \"strength\")'> Train strength </button> <button onclick = 'trainPet(" + this.idx + ", \"intelligence\")'> Train intelligence </button> </td><td> <button onclick = 'fight("+this.idx+")'>Fight </button></td> <td> <button onclick = 'shop("+this.idx+")'> Shop </button></td> <td> " + this.score + " </td> ";};
+
+
+			}
+			function trainPet(idx, type)
+			{
+
+				currentPet = idx;
+				currentTrain = type;
+				shopDiv.style.display = "none";
+				trainingGameDiv.style.display = "block";
+				intelligenceInstructions.style.display="none";
+				generalDiv.style.display = "none";
+				if(type == "strength")
+				{
+
+					strengthDiv.style.display = "block";
+					intelligenceText.style.display = "none";
+					intelligenceDiv.style.display = "none";
+					strengthDiv.innerHTML = "Press up and down as many times as you can within the time limit.";
+
+				}
+
+				if(type == "intelligence")
+				{
+					strengthDiv.style.display = "none";
+					intelligenceText.style.display = "none";
+					intelligenceDiv.style.display = "block";
+					generatedText.style.display = "none";
+					intelligenceInstructions.style.display = "block";
+					intelligenceInstructions.innerHTML = "Type as many words in order as you can within the time limit. Space the words with a space.";
+				}
+				returnButton.style.display = "none";
+			}
+
+
+
+			function shop(idx)
+			{
+				currentPet = idx;
+				shopDiv.style.display = "block";
+				fightDiv.style.display = "none";
+
+			}
+
+			function buy(item)
+			{
+				//ITEMS 0 = TREAT(25c), 1 = LEASH(25c), 2 = DOUBLE COINS POTION(5000c), 3 = SOAP(20c), 4 = MEDICINE(50c), 5 = OP POTION(1000c) 6 = CHERRY (25c), 7 = SUSHI (50c), 8 = SANDWICH (75c), 9 = HAPPY MEAL (100c)
+
+				pet = pets[currentPet];
+				if(item == 0 && pet.coins > 25)
+				{
+					pet.happiness += 25;
+					pet.coins -= 25;
+					if(pet.happiness > MAX_HAPPINESS)
+					{
+						pet.happiness = MAX_HAPPINESS;
+					}
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 6 && pet.coins > 25)
+				{
+					pet.fullness += 10;
+					pet.coins -= 25;
+					if(pet.fullness > MAX_FULLNESS)
+					{
+						pet.fullness = MAX_FULLNESS;
+					}
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 7 && pet.coins > 50)
+				{
+					pet.fullness += 25;
+					pet.coins -= 50;
+					if(pet.fullness > MAX_FULLNESS)
+					{
+						pet.fullness = MAX_FULLNESS;
+					}
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 8 && pet.coins > 75)
+				{
+					pet.fullness += 50;
+					pet.coins -= 75;
+					if(pet.fullness > MAX_FULLNESS)
+					{
+						pet.fullness = MAX_FULLNESS;
+					}
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 9 && pet.coins > 100)
+				{
+					pet.fullness = MAX_FULLNESS;
+					pet.happiness += 25;
+					pet.coins -= 100;
+					if(pet.happiness > MAX_HAPPINESS)
+					{
+						pet.happiness = MAX_HAPPINESS;
+					}
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 1 && pet.coins > 25)
+				{
+					pet.coins -= 25;
+					pet.health += 25;
+					pet.happiness -= 25;
+
+					if(pet.health > MAX_HEALTH)
+					{
+						pet.health = MAX_HEALTH;
+					}
+					if(pet.happiness < 0)
+					{
+						pet.happiness = 0;
+					}
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 2 && pet.coins > 5000)
+				{
+					pet.generateCoins();
+					pet.coins -= 5000;
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 3 && pet.coins > 20)
+				{
+					pet.cleanliness += 20;
+					pet.happiness += 10;
+					pet.coins -= 20;
+					if(pet.cleanliness > MAX_CLEANLINESS)
+					{
+						pet.cleanliness = MAX_CLEANLINESS;
+					}
+					if(pet.happiness > MAX_HAPPINESS)
+					{
+						pet.happiness = MAX_HAPPINESS;
+					}
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 4 && pet.coins > 50)
+				{
+					pet.sick = false;
+					pet.coins -= 50;
+					shopDiv.style.display = "none";
+				}
+
+				if(item == 5 && pet.coins > 10000)
+				{
+					pet.cleanliness = MAX_CLEANLINESS;
+					pet.happiness = MAX_HAPPINESS;
+					pet.health = MAX_HEALTH;
+					pet.age = 0;
+					pet.fullness = MAX_FULLNESS;
+					pet.coins -= 10000;
+					shopDiv.style.display = "none";
+				}
+
+			}
+
+
+
+			function submit()
+			{
+				createNewPetDiv.style.display = "none";
+				petInfo.style.display = "block";
+				pet = new Pet(petName.value);
+				pets.push(pet);
+				createdPet = true;
+				pet.generateCoins();
+				pet.living();
+				pet.sickLoop();
+
+				newPetRow = document.createElement("tr");
+				newPetRow.innerHTML = pets[pets.length -1].toString();
+				petDisplay.push(newPetRow);
+
+				petInfo.appendChild(newPetRow);
+
+				intro.style.display = "none";
+			}
+
+			function display()
+			{
+				for(i = 0; i < pets.length; i ++)
+				{
+					petDisplay[i].innerHTML = pets[i].toString();
+				}
+				if(createdPet)
+				{
+					coinsSpan.innerHTML = pets[pets.length-1].coins;
+
+				}
+
+			}
+
+			function beginTraining()
+			{
+
+				if(currentTrain == "intelligence")
+				{
+					intelligenceText.style.display = "block";
+					intelligenceText.value = "";
+					generateText();
+					generatedText.style.display = "block";
+				}
+				keyCount = 0;
+				displayTimer();
+				if(currentTrain == "strength")
+				{
+					training = true;
+				}
+				returnButton.style.display = "none";
+				beginTrainingBtn.style.display="none";
+
+			}
+
+			function endTraining()
+			{
+				training = false;
+				intelligenceText.style.display = "none";
+				generalDiv.style.display = "block";
+				generatedText.style.display = "none";
+				trainingGameDiv.style.display = "none";
+				returnButton.style.display = "none";
+				beginTrainingBtn.style.display="block";
+
+			}
+
+			function generateText()
+			{
+				generatedText.innerHTML = "";
+				generatedTextArr = [];
+				for(i = 0; i < 30; i ++)
+				{
+					randomWord = WORD_LIST[Math.floor(Math.random()*WORD_LIST.length)];
+					generatedTextArr.push(randomWord);
+					generatedText.innerHTML += randomWord + " ";
+
+				}
+			}
+
+
+			function displayTimer()
+			{
+
+				time = 60;
+				timeSpan.innerHTML = time;
+
+
+				countInterval = setInterval(timer,100);
+			}
+
+			function timer()
+			{
+				if(time > 0)
+				{
+					time --;
+					timeSpan.innerHTML = time;
+				}
+				else
+				{
+					if (currentTrain == "strength")
+					{
+						strengthDiv.innerHTML = "Thanks for playing! " + "You have gotten " + keyCount + " presses ";
+					}
+					clearInterval(countInterval);
+					training = false;
+					calculateScore();
+					if(currentTrain == "intelligence")
+					{
+						intelligenceInstructions.innerHTML = "Thanks for playing! " + "You have gotten " + userScore + " letters correctly.";
+					}
+
+
+
+				}
+			}
+
+			function calculateScore()
+			{
+				curPet = pets[currentPet];
+				if(currentTrain == "strength")
+				{
+					curPet.score += curPet.happiness*Math.floor(keyCount/5);
+					curPet.strength += Math.floor(keyCount/5);
+					curPet.coins += keyCount;
+					keyCountSpan.innerHTML = "";
+				}
+				if(currentTrain == "intelligence")
+				{
+					userScore = 0;
+					userInputText = intelligenceText.value;
+					textArr = userInputText.split(" ");
+					i = 0;
+					while(textArr[i] == generatedTextArr[i])
+					{
+						userScore += textArr[i].length;
+						i++;
+					}
+					curPet.score += userScore;
+					curPet.coins += userScore;
+					curPet.intelligence += userScore;
+					generatedText.innerHTML = "";
+					intelligenceText.value = "";
+					intelligenceText.style.display = "none";
+
+				}
+			}
+
+			function returnToGeneralScreen()
+			{
+				generalDiv.style.display = "block";
+				trainingGameDiv.style.display = "none";
+				intelligenceText.style.display = "none";
+				shopDiv.style.display = "none";
+				returnButton.style.display = "none";
+				fightDiv.style.display = "none";
+
+				opponentStrength.innerHTML = "";
+				opponentIntelligence.innerHTML = "";
+				fightingHealth.innerHTML = "";
+				fightingStrength.innerHTML = "";
+				winnerSpan.innerHTML = "";
+			}
+
+			function keyPressed(e)
+			{
+				if(training)
+				{
+					if(e.keyCode == 40 || e.keyCode == 38)
+					{
+						keyCountSpan.innerHTML = keyCount;
+						keyCount ++;
+					}
+				}
+			}
+
+			function fight(idx)
+			{
+				if(pets[idx].health > 50 && pets[idx].strength > 50)
+				{
+					currentPet = idx;
+					returnButton.style.display = "inline";
+					generalDiv.style.display = "none";
+					fightDiv.style.display = "block";
+
+					pet = pets[currentPet];
+
+					enemyStrength = Math.floor(Math.random()*100)-50+ pet.strength;
+					enemyIntelligence = Math.floor(Math.random()*100)-50 + pet.intelligence;
+					if(enemyIntelligence < 0)
+					{
+						enemyIntelligence = 0;
+					}
+					strDifference = pet.strength - enemyStrength;
+					intDifference = pet.intelligence - enemyIntelligence;
+
+					health = pet.health;
+					strength = pet.strength;
+					if(strDifference >= 0 && intDifference >= 10)
+					{
+						pet.health -= Math.abs(Math.round(strDifference/4));
+						pet.strength += Math.abs(Math.round(strDifference/2));
+						pet.coins += 100;
+						pet.score += 100;
+						winnerSpan.innerHTML = "won";
+					}
+					if(strDifference >= 0 && intDifference < 10)
+					{
+						pet.health -= Math.abs(Math.round(strDifference/3));
+						pet.strength += Math.abs(Math.round(strDifference/2));
+						pet.coins += 75;
+						pet.score += 75;
+						winnerSpan.innerHTML = "won";
+					}
+					if(strDifference < 0 && intDifference < 10)
+					{
+						pet.health -= 2*Math.abs(Math.round(strDifference/3));
+						pet.strength += Math.abs(Math.round(strDifference/5));
+						winnerSpan.innerHTML = "lost";
+					}
+
+					if(strDifference < 0 && intDifference >= 10)
+					{
+						pet.health -= Math.abs(Math.round(strDifference/2));
+						pet.strength += Math.abs(Math.round(strDifference/5));
+						pet.coins += 50;
+						pet.score += 50;
+						winnerSpan.innerHTML = "won";
+					}
+
+					newHealth = pet.health;
+					newStrength = pet.strength;
+
+					if(pet.health < 0)
+					{
+						pet.alive = false;
+						petDead.innerHTML = " Your pet died in the fight.";
+					}
+					opponentStrength.innerHTML = enemyStrength;
+					opponentIntelligence.innerHTML = enemyIntelligence;
+					fightingHealth.innerHTML = health - newHealth;
+					fightingStrength.innerHTML = newStrength - strength;
+				}
+				else
+				{
+					alert("You can not fight unless your pet has more than 50 health and 50 strength.");
+				}
+
+
+			}
+			function balsyFight(idx)
+			{
+				currentPet = idx;
+				returnButton.style.display = "inline";
+				generalDiv.style.display = "none";
+				fightDiv.style.display = "block";
+
+				pet = pets[currentPet];
+
+				enemyStrength = Math.floor(Math.random()*100)-50+ pet.strength;
+				enemyIntelligence = Math.floor(Math.random()*100)-50 + pet.intelligence;
+				if(enemyIntelligence < 0)
+				{
+					enemyIntelligence = 0;
+				}
+				strDifference = pet.strength - enemyStrength;
+				intDifference = pet.intelligence - enemyIntelligence;
+
+				health = pet.health;
+				strength = pet.strength;
+				if(strDifference >= 0 && intDifference >= 10)
+				{
+					pet.health -= Math.abs(Math.round(strDifference/4));
+					pet.strength += Math.abs(Math.round(strDifference/2));
+					pet.coins += 100;
+					pet.score += 100;
+					winnerSpan.innerHTML = "won";
+				}
+				if(strDifference >= 0 && intDifference < 10)
+				{
+					pet.health -= Math.abs(Math.round(strDifference/3));
+					pet.strength += Math.abs(Math.round(strDifference/2));
+					pet.coins += 75;
+					pet.score += 75;
+					winnerSpan.innerHTML = "won";
+				}
+				if(strDifference < 0 && intDifference < 10)
+				{
+					pet.health -= 2*Math.abs(Math.round(strDifference/3));
+					pet.strength += Math.abs(Math.round(strDifference/5));
+					winnerSpan.innerHTML = "lost";
+				}
+
+				if(strDifference < 0 && intDifference >= 10)
+				{
+					pet.health -= Math.abs(Math.round(strDifference/2));
+					pet.strength += Math.abs(Math.round(strDifference/5));
+					pet.coins += 50;
+					pet.score += 50;
+					winnerSpan.innerHTML = "won";
+				}
+
+				newHealth = pet.health;
+				newStrength = pet.strength;
+
+				if(pet.health < 0)
+				{
+					pet.alive = false;
+					petDead.innerHTML = " Your pet died in the fight.";
+				}
+				opponentStrength.innerHTML = enemyStrength;
+				opponentIntelligence.innerHTML = enemyIntelligence;
+				fightingHealth.innerHTML = health - newHealth;
+				fightingStrength.innerHTML = newStrength - strength;
+			}
+			</script>
+	</head>
+	<body onload = "initialize()">
+	<div id = "general">
+		<div id = "intro">
+				<div id= "begin">
+				 Hi There! Looks like you're adopting today.
+			 </br>
+
+
+				 <img onclick = "yes()" src="buttons/button_yes.png"> </img>
+			 	</div>
+
+				 <div id="selectionDiv">
+					 Great, fantastic! Please select for your newest family member.
+				 	 </br>
+					 <img onclick = "playerSelect('avatars/first.gif');" src = "avatars/first.gif" />
+					 <img onclick = "playerSelect('avatars/second.gif');" src = "avatars/second.gif" />
+					 <img onclick = "playerSelect('avatars/third.gif');" src = "avatars/third.gif" />
+				 </div>
+
+				<div id = "createNewPetDiv">
+					Perfect selection! What would you like to name it?
+				</br>
+
+					<input id = "inputName" type = "text"> </input>
+					<img onclick = "submit()" src="buttons/button_adopt.png">  </img>
+				</div>
+
+
+
+		 </div>
+
+		<table id = "petInfo">
+			<tr>
+				<th> Name </th>
+				<th> Age </th>
+				<th> Cleanliness </th>
+				<th> Happiness </th>
+				<th> Health </th>
+				<th> Fullness </th>
+				<th> Strength </th>
+				<th> Intelligence </th>
+				<th> Coins </th>
+				<th> Sick </th>
+				<th> Train </th>
+				<th> Fight </th>
+				<th> Shop </th>
+				<th> Score </th>
+			</tr>
+		</table>
+	</div>
+
+	<br/>
+	<img id = "petChoice" src = ""/>
+	<br/>
+	<br/>
+
+
+	<div id = "trainingGameDiv">
+		<h1> Time : <span id = "timeSpan"></span></h1>
+		<div id = "intelligenceDiv">
+					<div id="intelligenceInstructions"> 	</div>
+			<h2 id = "generatedText"></h2>
+			<input type = "text" id = "intelligenceText"> </input>
+		</div>
+		<div id = "strengthDiv"> </div>
+		<h1><span id = "keyCountSpan"></span></h1>
+	</br>
+</br>
+</br>
+		<button id = "beginTrainingBtn" onclick = "beginTraining()"> Begin Training </button>
+		<button onclick = "endTraining()"> End Training </button>
+		<span id = "trainingCount"></span>
+
+	</div>
+	<div id = "shopDiv">
+		You have <span id = "coinsSpan"> </span> coins. What would you like to spend it on?
+		<br />
+		<button onclick = "buy(0)"> Treat (25 coins) </button> +25 happiness
+		<br />
+		<button onclick = "buy(1)"> Leash (25 coins) </button> +25 health, -25 happiness
+		<br/>
+		<button onclick = "buy(6)"> Cherry (25 coins) </button> +10 fullness
+		<br />
+		<button onclick = "buy(7)"> Sushi (50 coins) </button> +25 fullness
+		<br />
+		<button onclick = "buy(8)"> Sandwich (75 coins) </button> + 50 fullness
+		<br />
+		<button onclick = "buy(9)"> Happy Meal (100 coins) </button> Max fullness, +25 happiness <br />
+		<button onclick = "buy(2)"> Double Coins Potion (5000 coins) </button>
+		<br />
+		<button onclick = "buy(3)"> Soap (20 coins) </button>  +20 cleanliness, +10 happiness
+		<br />
+		<button onclick = "buy(4)"> Medicine (50 coins) </button>  cures sickness
+		<br />
+		<button onclick = "buy(5)"> Magical Potion (10000 coins) </button> cleanliness, happiness, health, fullness MAX, age reset.
+		<br />
+
+		<img onclick= "returnToGeneralScreen()" src="buttons/button_nevermind.png"> </img>
+
+	</div>
+
+	<div id = "fightDiv">
+		Your opponent has <span id = "opponentStrength"> </span> strength and <span id = "opponentIntelligence"></span> intelligence. You <span id = "winnerSpan"> </span>. You lost <span id = "fightingHealth"> </span> health and gained <span id = "fightingStrength"> </span> strength. <span id = "petDead"> </span>
+	</div>
+		<img onclick = "returnToGeneralScreen()" src= "buttons/button_home.png" id = "returnButton"> </img>
+
+	<button onclick = "balsyFight(0)" id = "instantFight">fight</button>
+	</body>
+</html>
